@@ -26,7 +26,7 @@
 <p>Para utilizar, você deve apenas rodar o código e utilizar os sinais já definidos, sendo esses:</p>
 
 <p>
-  <img src=https://github.com/lucaslfb/WebScrapingAirBnb/assets/128868356/6946048c-c155-4df0-b14a-9c4e31b91e9d>
+  <img src=https://github.com/user-attachments/assets/2fec8fad-e5cd-41ba-9a2b-22a3f3a82e7e>
   <img src=https://github.com/lucaslfb/WebScrapingAirBnb/assets/128868356/85aea485-5c8c-425c-8f29-a834bb619f6a>
   <img src=https://github.com/lucaslfb/WebScrapingAirBnb/assets/128868356/7f807ed2-102f-41b6-96e9-370c9721be63>
   <img src=https://github.com/lucaslfb/WebScrapingAirBnb/assets/128868356/0a60bcbb-35eb-415d-af4c-41cacfa42414>
