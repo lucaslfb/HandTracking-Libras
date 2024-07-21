@@ -82,6 +82,7 @@ while cap.isOpened():
                 'thumb+pinky': [1, 0, 0, 0, 1],
                 'thumb+index+pinky': [1, 1, 0, 0, 1],
                 'index+middle': [0, 1, 1, 0, 0],
+                'index+middle+ring+pinky': [0, 1, 1, 1, 1]
             }
 
             def hand_points(hand_index, point):
@@ -120,6 +121,13 @@ while cap.isOpened():
             for hand in hands:
                 state = detector.fingersUp(hand)  # Verifica dedos levantados de cada mão
                 threshold = 35  # Distância em pixels dos pontos da mão
+
+                if (state == fingers_situation['index+middle+ring+pinky'] and
+                        (calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
+                                            hand_points(hands.index(hand), 'middle_mcp')) < threshold and
+                         calculate_distance(hand_points(hands.index(hand), 'ring_tip'),
+                                            hand_points(hands.index(hand), 'middle_tip')) < threshold)):
+                    config_text('b')
 
                 if (state == fingers_situation['pinky'] and
                         (calculate_distance(hand_points(hands.index(hand), 'middle_dip'),
