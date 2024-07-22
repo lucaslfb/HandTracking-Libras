@@ -20,7 +20,7 @@
 <h2>Status do Projeto ⌛</h2>
    
  ![Static Badge](https://img.shields.io/badge/Status-building-orange)
- ![Static Badge](https://img.shields.io/badge/Version-v1.0.0-blue)
+ ![Static Badge](https://img.shields.io/badge/Version-v1.0.1-blue)
 
 <h2>Como usar 👣</h2>
 <p>Para utilizar, você deve apenas rodar o código e utilizar os sinais já definidos, sendo esses:</p>
