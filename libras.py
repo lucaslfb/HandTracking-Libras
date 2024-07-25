@@ -11,8 +11,26 @@ height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 detector = HandDetector(detectionCon=0.8, maxHands=2)
 
-words = []
+words, hand_coordinates, sum_of_difference = [], [], []
 text_timer = 0
+
+
+def calculate_movement(point, distance):
+    hand_coordinates.append(point)
+
+    if len(hand_coordinates) > 10:
+        hand_coordinates.pop(0)
+        coordinate_difference = [hand_coordinates[i][0] - hand_coordinates[i - 1][0] for i in
+                                 range(1, len(hand_coordinates))]
+        sum_of_difference.append(sum(coordinate_difference))
+        if len(sum_of_difference) > 5:
+            sum_of_difference.pop(0)
+            distance_difference = [sum_of_difference[i] - sum_of_difference[i - 1] for i in
+                                   range(1, len(sum_of_difference))]
+            if sum(distance_difference) > distance or sum(distance_difference) < -distance:
+                return True
+
+    return False
 
 
 def draw_text():
@@ -201,9 +219,10 @@ while cap.isOpened():
                                             hand_points(hands.index(hand), 'index_mcp')) < threshold)):
                     config_text('me chamo')
 
-                if (state == fingers_situation['index'] and
-                        (calculate_distance(hand_points(hands.index(hand), 'middle_dip'),
-                                            hand_points(hands.index(hand), 'middle_mcp')) < threshold)):
+                if ((state == fingers_situation['index'] and
+                     (calculate_distance(hand_points(hands.index(hand), 'middle_dip'),
+                                         hand_points(hands.index(hand), 'middle_mcp')) < threshold)) and
+                        calculate_movement(hand_points(hands.index(hand), 'index_tip'), 115)):
                     config_text('nao')
 
                 if (state == fingers_situation['none'] and

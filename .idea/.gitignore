@@ -1,3 +1,8 @@
 # Default ignored files
 /shelf/
 /workspace.xml
+*.HandDetect.py
+*.t.py
+*.test.py
+*.Hands.py
+*.vcs.xml
