@@ -20,7 +20,10 @@
 <h2>Status do Projeto ⌛</h2>
    
  ![Static Badge](https://img.shields.io/badge/Status-building-orange)
- ![Static Badge](https://img.shields.io/badge/Version-v1.0.1-blue)
+ ![Static Badge](https://img.shields.io/badge/Version-v1.0.2-blue)
+
+ <p>Na versão 1.0.2 foi adicionada a lógica de movimentação baseado no cálculo das coordenadas X dos pontos da mão utilizando
+   os vetores dos frames. A lógica está aplicada para o sinal "não" ao mover a ponta do dedo indicador para os lados.</p>
 
 <h2>Como usar 👣</h2>
 <p>Para utilizar, você deve apenas rodar o código e utilizar os sinais já definidos, sendo esses:</p>
