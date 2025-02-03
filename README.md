@@ -20,16 +20,16 @@
 <h2>Status do Projeto ⌛</h2>
    
  ![Static Badge](https://img.shields.io/badge/Status-building-orange)
- ![Static Badge](https://img.shields.io/badge/Version-v1.0.2-blue)
+ ![Static Badge](https://img.shields.io/badge/Version-v1.0.3-blue)
 
- <p>Na versão 1.0.2 foi adicionada a lógica de movimentação baseado no cálculo das coordenadas X dos pontos da mão utilizando
-   os vetores dos frames. A lógica está aplicada para o sinal "não" ao mover a ponta do dedo indicador para os lados.</p>
+ <p>Na versão 1.0.3 foi adicionada a lógica da letra "d". Também foram adicionadas lógicas de movimentação e tempo de sinal dos
+   movimentos de "s" e "sim", auxiliando a diferenciação de ambos.</p>
 
 <h2>Como usar 👣</h2>
 <p>Para utilizar, você deve apenas rodar o código e utilizar os sinais já definidos, sendo esses:</p>
 
 <p>
-  <img src=https://github.com/user-attachments/assets/2fec8fad-e5cd-41ba-9a2b-22a3f3a82e7e>
+  <img src=https://github.com/user-attachments/assets/725c9769-bb98-4339-bf45-8b0d6e60b499>
   <img src=https://github.com/lucaslfb/WebScrapingAirBnb/assets/128868356/85aea485-5c8c-425c-8f29-a834bb619f6a>
   <img src=https://github.com/lucaslfb/WebScrapingAirBnb/assets/128868356/7f807ed2-102f-41b6-96e9-370c9721be63>
   <img src=https://github.com/lucaslfb/WebScrapingAirBnb/assets/128868356/0a60bcbb-35eb-415d-af4c-41cacfa42414>
