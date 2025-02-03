@@ -1,4 +1,5 @@
 import cv2
+import time
 from cvzone.HandTrackingModule import HandDetector
 
 cap = cv2.VideoCapture(0)
@@ -11,23 +12,35 @@ height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 detector = HandDetector(detectionCon=0.8, maxHands=2)
 
-words, hand_coordinates, sum_of_difference = [], [], []
-text_timer = 0
+words, hand_coordinates, sum_of_difference_x, sum_of_difference_y = [], [], [], []
+start_time = {}
+text_timer,  threshold = 0, 35
 
 
-def calculate_movement(point, distance):
+def calculate_movement(point, min_distance_x=None, min_distance_y=None, max_distance_x=None, max_distance_y=None):
     hand_coordinates.append(point)
 
     if len(hand_coordinates) > 10:
         hand_coordinates.pop(0)
-        coordinate_difference = [hand_coordinates[i][0] - hand_coordinates[i - 1][0] for i in
-                                 range(1, len(hand_coordinates))]
-        sum_of_difference.append(sum(coordinate_difference))
-        if len(sum_of_difference) > 5:
-            sum_of_difference.pop(0)
-            distance_difference = [sum_of_difference[i] - sum_of_difference[i - 1] for i in
-                                   range(1, len(sum_of_difference))]
-            if sum(distance_difference) > distance or sum(distance_difference) < -distance:
+        coordinate_difference_x = [hand_coordinates[i][0] - hand_coordinates[i - 1][0] for i in
+                                   range(1, len(hand_coordinates))]
+        coordinate_difference_y = [hand_coordinates[i][1] - hand_coordinates[i - 1][1] for i in
+                                   range(1, len(hand_coordinates))]
+        sum_of_difference_x.append(sum(coordinate_difference_x))
+        sum_of_difference_y.append(sum(coordinate_difference_y))
+        if len(sum_of_difference_x) > 5 and (min_distance_x is not None or max_distance_x is not None):
+            sum_of_difference_x.pop(0)
+            distance_difference_x = [sum_of_difference_x[i] - sum_of_difference_x[i - 1] for i in
+                                     range(1, len(sum_of_difference_x))]
+            if ((min_distance_x is not None and abs(sum(distance_difference_x)) > min_distance_x) or
+                    (max_distance_x is not None and abs(sum(distance_difference_x)) < max_distance_x)):
+                return True
+        if len(sum_of_difference_y) > 5:
+            sum_of_difference_y.pop(0)
+            distance_difference_y = [sum_of_difference_y[i] - sum_of_difference_y[i - 1] for i in
+                                     range(1, len(sum_of_difference_y))]
+            if ((min_distance_y is not None and abs(sum(distance_difference_y)) > min_distance_y) or
+                    (max_distance_y is not None and abs(sum(distance_difference_y)) < max_distance_y)):
                 return True
 
     return False
@@ -60,8 +73,27 @@ def draw_text():
         words.clear()
 
 
+def counter_time(condition, gesture):
+    global start_time
+
+    if gesture not in start_time:
+        start_time[gesture] = 0
+
+    if condition:
+        if start_time[gesture] == 0:
+            start_time[gesture] = time.time()
+        elif time.time() - start_time[gesture] >= 0.3:
+            start_time[gesture] = 0
+            return True
+    else:
+        start_time[gesture] = 0
+
+    return False
+
+
 def calculate_distance(point_0, point_1):
     distance = detector.findDistance(point_0, point_1)[0]
+
     return distance
 
 
@@ -73,6 +105,7 @@ def config_text(text):
         print(words)
 
     text_timer = int(cap.get(cv2.CAP_PROP_FPS)) * 2
+
     return text_timer
 
 
@@ -138,114 +171,127 @@ while cap.isOpened():
 
             for hand in hands:
                 state = detector.fingersUp(hand)  # Verifica dedos levantados de cada mão
-                threshold = 35  # Distância em pixels dos pontos da mão
 
-                if (state == fingers_situation['index+middle+ring+pinky'] and
-                        (calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
-                                            hand_points(hands.index(hand), 'middle_mcp')) < threshold and
-                         calculate_distance(hand_points(hands.index(hand), 'ring_tip'),
-                                            hand_points(hands.index(hand), 'middle_tip')) < threshold)):
-                    config_text('b')
+                b = (state == fingers_situation['index+middle+ring+pinky'] and
+                     (calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
+                                         hand_points(hands.index(hand), 'middle_mcp')) < threshold and
+                      calculate_distance(hand_points(hands.index(hand), 'ring_tip'),
+                                         hand_points(hands.index(hand), 'middle_tip')) < threshold))
 
-                if (state == fingers_situation['pinky'] and
-                        (calculate_distance(hand_points(hands.index(hand), 'middle_dip'),
-                                            hand_points(hands.index(hand), 'middle_mcp')) < threshold and
-                         calculate_distance(hand_points(hands.index(hand), 'thumb_ip'),
-                                            hand_points(hands.index(hand), 'middle_dip')) < threshold)):
-                    config_text('i')
+                i = (state == fingers_situation['pinky'] and
+                     (calculate_distance(hand_points(hands.index(hand), 'middle_dip'),
+                                         hand_points(hands.index(hand), 'middle_mcp')) < threshold and
+                      calculate_distance(hand_points(hands.index(hand), 'thumb_ip'),
+                                         hand_points(hands.index(hand), 'middle_dip')) < threshold))
 
-                if (state == fingers_situation['index+middle'] and
-                        (calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
-                                            hand_points(hands.index(hand), 'ring_mcp')) < threshold and
-                         calculate_distance(hand_points(hands.index(hand), 'pinky_dip'),
-                                            hand_points(hands.index(hand), 'pinky_mcp')) < threshold)):
-                    config_text('u')
+                u = (state == fingers_situation['index+middle'] and
+                     (calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
+                                         hand_points(hands.index(hand), 'ring_mcp')) < threshold and
+                      calculate_distance(hand_points(hands.index(hand), 'pinky_dip'),
+                                         hand_points(hands.index(hand), 'pinky_mcp')) < threshold))
 
-                if (state == fingers_situation['thumb+index'] and
-                        (calculate_distance(hand_points(hands.index(hand), 'middle_pip'),
-                                            hand_points(hands.index(hand), 'middle_mcp')) < threshold and
-                         calculate_distance(hand_points(hands.index(hand), 'ring_pip'),
-                                            hand_points(hands.index(hand), 'ring_mcp')) < threshold and
-                         calculate_distance(hand_points(hands.index(hand), 'pinky_pip'),
-                                            hand_points(hands.index(hand), 'pinky_mcp')) < threshold)):
-                    config_text('l')
+                l = (state == fingers_situation['thumb+index'] and
+                     (calculate_distance(hand_points(hands.index(hand), 'middle_pip'),
+                                         hand_points(hands.index(hand), 'middle_mcp')) < threshold and
+                      calculate_distance(hand_points(hands.index(hand), 'ring_pip'),
+                                         hand_points(hands.index(hand), 'ring_mcp')) < threshold and
+                      calculate_distance(hand_points(hands.index(hand), 'pinky_pip'),
+                                         hand_points(hands.index(hand), 'pinky_mcp')) < threshold))
 
-                if (state == fingers_situation['thumb'] and
-                        (calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
-                                            hand_points(hands.index(hand), 'index_tip')) < threshold and
-                         calculate_distance(hand_points(hands.index(hand), 'index_mcp'),
-                                            hand_points(hands.index(hand), 'pinky_mcp')) < threshold)):
-                    config_text('o')
+                o = (state == fingers_situation['thumb'] and
+                     (calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
+                                         hand_points(hands.index(hand), 'index_tip')) < threshold and
+                      calculate_distance(hand_points(hands.index(hand), 'index_mcp'),
+                                         hand_points(hands.index(hand), 'pinky_mcp')) < threshold))
 
-                if (state == fingers_situation['thumb+pinky'] and
-                        (calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
-                                            hand_points(hands.index(hand), 'index_tip')) > threshold * 1.5 and
-                         calculate_distance(hand_points(hands.index(hand), 'index_mcp'),
-                                            hand_points(hands.index(hand), 'pinky_mcp')) < threshold)):
-                    config_text('c')
+                d = (state == fingers_situation['thumb+index'] and
+                     (calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
+                                         hand_points(hands.index(hand), 'middle_tip')) < threshold and
+                      calculate_distance(hand_points(hands.index(hand), 'middle_mcp'),
+                                         hand_points(hands.index(hand), 'pinky_mcp')) < threshold))
 
-                if (state == fingers_situation['thumb'] and
-                        (calculate_distance(hand_points(hands.index(hand), 'thumb_ip'),
-                                            hand_points(hands.index(hand), 'index_mcp')) < threshold and
-                         calculate_distance(hand_points(hands.index(hand), 'middle_dip'),
-                                            hand_points(hands.index(hand), 'middle_mcp')) < threshold)):
-                    config_text('a')
+                c = (state == fingers_situation['thumb+pinky'] and
+                     (calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
+                                         hand_points(hands.index(hand), 'index_tip')) > threshold * 1.5 and
+                      calculate_distance(hand_points(hands.index(hand), 'index_mcp'),
+                                         hand_points(hands.index(hand), 'pinky_mcp')) < threshold))
 
-                if (state == fingers_situation['none'] and
-                        (calculate_distance(hand_points(hands.index(hand), 'middle_tip'),
-                                            hand_points(hands.index(hand), 'middle_mcp')) < threshold and
-                         calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
-                                            hand_points(hands.index(hand), 'middle_dip')) < threshold)):
-                    config_text('s')
+                a = (state == fingers_situation['thumb'] and
+                     (calculate_distance(hand_points(hands.index(hand), 'thumb_ip'),
+                                         hand_points(hands.index(hand), 'index_mcp')) < threshold and
+                      calculate_distance(hand_points(hands.index(hand), 'middle_dip'),
+                                         hand_points(hands.index(hand), 'middle_mcp')) < threshold))
 
-                if (state == fingers_situation['all'] and
+                s = (state == fingers_situation['none'] and
+                     (calculate_distance(hand_points(hands.index(hand), 'middle_tip'),
+                                         hand_points(hands.index(hand), 'middle_mcp')) < threshold and
+                      calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
+                                         hand_points(hands.index(hand), 'middle_dip')) < threshold) and
+                     calculate_movement(hand_points(hands.index(hand), 'middle_dip'), None, None, 5, 5))
+
+                tudo = (state == fingers_situation['all'] and
                         (calculate_distance(hand_points(hands.index(hand), 'index_tip'),
                                             hand_points(hands.index(hand), 'middle_tip')) < threshold and
                          calculate_distance(hand_points(hands.index(hand), 'middle_tip'),
                                             hand_points(hands.index(hand), 'ring_tip')) < threshold and
                          calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
-                                            hand_points(hands.index(hand), 'index_tip')) < threshold)):
-                    config_text('tudo')
+                                            hand_points(hands.index(hand), 'index_tip')) < threshold))
 
-                if (state == fingers_situation['thumb'] and
-                        (calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
-                                            hand_points(hands.index(hand), 'index_tip')) > threshold * 1.8 and
-                         calculate_distance(hand_points(hands.index(hand), 'middle_tip'),
-                                            hand_points(hands.index(hand), 'middle_mcp')) < threshold)):
-                    config_text('bem?')
+                bem = (state == fingers_situation['thumb'] and
+                       (calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
+                                           hand_points(hands.index(hand), 'index_tip')) > threshold * 1.8 and
+                        calculate_distance(hand_points(hands.index(hand), 'middle_tip'),
+                                           hand_points(hands.index(hand), 'middle_mcp')) < threshold))
 
-                if (state == fingers_situation['index+middle'] and
-                        (calculate_distance(hand_points(hands.index(hand), 'thumb_mcp'),
-                                            hand_points(hands.index(hand), 'index_mcp')) < threshold)):
-                    config_text('me chamo')
+                me_chamo = (state == fingers_situation['index+middle'] and
+                            calculate_distance(hand_points(hands.index(hand), 'thumb_mcp'),
+                                               hand_points(hands.index(hand), 'index_mcp')) < threshold)
 
-                if ((state == fingers_situation['index'] and
-                     (calculate_distance(hand_points(hands.index(hand), 'middle_dip'),
-                                         hand_points(hands.index(hand), 'middle_mcp')) < threshold)) and
-                        calculate_movement(hand_points(hands.index(hand), 'index_tip'), 115)):
-                    config_text('nao')
+                nao = (state == fingers_situation['index'] and
+                       (calculate_distance(hand_points(hands.index(hand), 'middle_dip'),
+                                           hand_points(hands.index(hand), 'middle_mcp')) < threshold) and
+                       calculate_movement(hand_points(hands.index(hand), 'index_tip'), 80))
 
-                if (state == fingers_situation['none'] and
-                        (calculate_distance(hand_points(hands.index(hand), 'middle_pip'),
-                                            hand_points(hands.index(hand), 'middle_mcp')) < threshold * 0.5 and
-                         calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
-                                            hand_points(hands.index(hand), 'middle_dip')) < threshold)):
-                    config_text('sim')
+                sim = (state == fingers_situation['none'] and
+                       (calculate_distance(hand_points(hands.index(hand), 'middle_pip'),
+                                           hand_points(hands.index(hand), 'middle_mcp')) < threshold and
+                        calculate_distance(hand_points(hands.index(hand), 'thumb_tip'),
+                                           hand_points(hands.index(hand), 'middle_dip')) < threshold) and
+                       calculate_movement(hand_points(hands.index(hand), 'middle_pip'), None, 10))
 
-                if (state == fingers_situation['thumb+index+pinky'] and
-                        (calculate_distance(hand_points(hands.index(hand), 'middle_dip'),
-                                            hand_points(hands.index(hand), 'middle_mcp')) < threshold)):
-                    config_text('eu te amo')
+                eu_te_amo = (state == fingers_situation['thumb+index+pinky'] and
+                             calculate_distance(hand_points(hands.index(hand), 'middle_dip'),
+                                                hand_points(hands.index(hand), 'middle_mcp')) < threshold)
 
-                if len(hands) == 2:  # Verifica se são duas mãos levantadas. Lógica para ambas as mãos abaixo:
-                    state_other = detector.fingersUp(hands[1])  # Instancia a segunda mão e seus pontos
+                por_favor = (len(hands) == 2 and
+                             state == fingers_situation['thumb'] and
+                             detector.fingersUp(hands[1]) == fingers_situation['thumb'] and
+                             calculate_distance(hand_points(0, 'middle_tip'),
+                                                hand_points(1, 'middle_tip')) < threshold < calculate_distance(
+                            hand_points(0, 'middle_mcp'), hand_points(1, 'middle_mcp')))
 
-                    if (state == fingers_situation['thumb'] and state_other == fingers_situation['thumb'] and
-                            (calculate_distance(hand_points(0, 'middle_tip'),
-                                                hand_points(1, 'middle_tip')) < threshold) and
-                            calculate_distance(hand_points(0, 'middle_mcp'),
-                                               hand_points(1, 'middle_mcp')) > threshold):
-                        config_text('por favor')
+                g_words = {
+                    'b': b,
+                    'i': i,
+                    'u': u,
+                    'l': l,
+                    'o': o,
+                    'd': d,
+                    'c': c,
+                    'a': a,
+                    's': s,
+                    'tudo': tudo,
+                    'bem': bem,
+                    'me chamo': me_chamo,
+                    'nao': nao,
+                    'sim': sim,
+                    'por favor': por_favor,
+                    'eu te amo': eu_te_amo
+                }
+
+                for key, value in g_words.items():
+                    if counter_time(value, key):
+                        config_text(key)
 
     draw_text()
     cv2.imshow('hands', frame)
